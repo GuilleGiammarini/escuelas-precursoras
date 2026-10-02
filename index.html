@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Escuelas Precursoras</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="app">
+
+    <aside class="panel">
+
+      <div class="panel-head">
+        <p class="eyebrow">
+          San Martín · Unión · Marcos Juárez · San Justo
+        </p>
+
+        <h1>Escuelas Precursoras</h1>
+
+        <p class="count">
+          <strong id="contador">0</strong> establecimientos
+        </p>
+      </div>
+
+      <div class="controles">
+
+        <input
+          type="search"
+          id="buscar"
+          placeholder="Buscar por nombre, localidad o CUE"
+        >
+
+        <div class="selects">
+
+          <select id="f-depto">
+            <option value="">Departamento</option>
+          </select>
+
+          <select id="f-nivel">
+            <option value="">Nivel</option>
+          </select>
+
+          <select id="f-sector">
+            <option value="">Sector</option>
+          </select>
+
+          <select id="f-anio">
+            <option value="">Año</option>
+          </select>
+
+        </div>
+
+        <button id="limpiar" type="button">
+          Limpiar filtros
+        </button>
+
+      </div>
+
+      <div class="leyenda" id="leyenda"></div>
+
+      <ul class="lista" id="lista"></ul>
+
+    </aside>
+
+    <main class="mapa-wrap">
+
+      <div id="mapa"></div>
+
+      <button id="btn-resumen" type="button" hidden>
+        ← Volver al resumen
+      </button>
+
+    </main>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Límite real de la Provincia de Córdoba -->
+  <script src="data/data_provincia.js"></script>
+
+  <!-- Límites de departamentos y lógica de la aplicación -->
+  <script src="app.js"></script>
+
+</body>
+</html>
