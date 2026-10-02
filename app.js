@@ -8,7 +8,9 @@ const DEPARTAMENTOS = [
   "UNION",
   "MARCOS JUAREZ",
   "MARCO JUAREZ",
-  "SAN JUSTO"
+  "SAN JUSTO",
+  "GENERAL ROCA",
+  "PRESIDENTE ROQUE SAENZ PENA"
 ];
 
 const PALETA = [
@@ -55,6 +57,202 @@ const bonito = (t) =>
       /(^|[\s.\-(])([a-záéíóúñ])/g,
       (m, a, b) => a + b.toUpperCase()
     );
+
+
+/* ============================================================
+   CLASIFICACIÓN OFICIAL DE ESCUELAS PRECURSORAS
+   ============================================================
+
+   La clasificación NO se calcula por el nombre de la institución.
+   Se utiliza la clasificación generada a partir de los planes,
+   orientaciones y niveles informados por la fuente oficial.
+
+   Importante:
+   una misma institución puede tener más de una orientación.
+   Por eso las categorías y subcategorías se manejan como arrays.
+   Además, se seleccionan las clasificaciones correspondientes
+   al nivel de la ficha que estamos mostrando.
+   ============================================================ */
+
+const CATEGORIAS_PRECURSORAS = [
+  "Orientaciones Técnicas y de Producción (Alimentos y Bioagroindustria)",
+  "Ciencias Sociales y Humanidades",
+  "Instituciones Pedagógicas (Nivel Superior de Formación Docente)",
+  "SIN CLASIFICAR"
+];
+
+
+function obtenerClasificaciones(e) {
+
+  const todas = Array.isArray(e.clasificacionesPrecursora)
+    ? e.clasificacionesPrecursora
+    : [];
+
+  if (!todas.length) {
+    return [];
+  }
+
+  const nivel = normalizar(e.nivel);
+
+  // Las fichas de secundaria y Jóvenes y Adultos
+  // se relacionan con las orientaciones de Secundaria.
+  const esSecundaria =
+    nivel.includes("SECUNDARIO") ||
+    nivel.includes("JOVENES Y ADULTOS");
+
+  // Las fichas de Superior se relacionan con los planes SNU.
+  const esSuperior =
+    nivel.includes("SUPERIOR");
+
+  if (esSecundaria) {
+
+    const secundarias = todas.filter(
+      (c) => normalizar(c.nivel) === "SECUNDARIA"
+    );
+
+    if (secundarias.length) {
+      return secundarias;
+    }
+
+  }
+
+  if (esSuperior) {
+
+    const snu = todas.filter(
+      (c) => normalizar(c.nivel) === "SNU"
+    );
+
+    if (snu.length) {
+      return snu;
+    }
+
+  }
+
+  // Para otros casos dejamos las clasificaciones disponibles.
+  return todas;
+}
+
+
+function obtenerCategorias(e) {
+
+  const categorias =
+    obtenerClasificaciones(e)
+      .map((c) => c.categoria)
+      .filter(Boolean);
+
+  // Si la clasificación oficial indica explícitamente una
+  // categoría pero no trae el detalle de clasificaciones,
+  // usamos también ese campo como respaldo.
+  if (!categorias.length && e.categoriaPrecursoraOficial) {
+    return [e.categoriaPrecursoraOficial];
+  }
+
+  return [
+    ...new Set(categorias)
+  ];
+}
+
+
+function obtenerSubcategorias(e) {
+
+  const subcategorias =
+    obtenerClasificaciones(e)
+      .map((c) => c.subcategoria)
+      .filter(Boolean);
+
+  if (!subcategorias.length && e.subcategoriaPrecursoraOficial) {
+    return [e.subcategoriaPrecursoraOficial];
+  }
+
+  return [
+    ...new Set(subcategorias)
+  ];
+}
+
+
+function etiquetaCategorias(e) {
+
+  const valores = obtenerCategorias(e);
+
+  return valores.length
+    ? valores.map(escapar).join(" · ")
+    : "Sin clasificar";
+}
+
+
+function etiquetaSubcategorias(e) {
+
+  const valores = obtenerSubcategorias(e);
+
+  return valores.length
+    ? valores.map(escapar).join(" · ")
+    : "Revisar";
+}
+
+
+function obtenerTodasLasCategorias() {
+
+  return [
+    ...new Set(
+      escuelas.flatMap((e) => obtenerCategorias(e))
+    )
+  ].sort((a, b) =>
+    a.localeCompare(b, "es")
+  );
+}
+
+
+function obtenerTodasLasSubcategorias(categoria = "") {
+
+  return [
+    ...new Set(
+      escuelas.flatMap((e) => {
+
+        const categorias = obtenerCategorias(e);
+
+        if (
+          categoria &&
+          !categorias.includes(categoria)
+        ) {
+          return [];
+        }
+
+        return obtenerSubcategorias(e);
+
+      })
+    )
+  ].sort((a, b) =>
+    a.localeCompare(b, "es")
+  );
+}
+
+
+function llenarSelectValores(id, valores) {
+
+  const sel = document.getElementById(id);
+
+  while (sel.options.length > 1) {
+    sel.remove(1);
+  }
+
+  [...new Set(valores.filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "es"))
+    .forEach((v) => {
+      sel.add(new Option(v, v));
+    });
+}
+
+
+function actualizarSubcategorias() {
+
+  const categoria =
+    document.getElementById("f-categoria").value;
+
+  llenarSelectValores(
+    "f-subcategoria",
+    obtenerTodasLasSubcategorias(categoria)
+  );
+}
 
 
 // ============================================================
@@ -295,7 +493,7 @@ function crearMascaraProvincia() {
 
 Promise.all([
 
-  fetch("data/escuelas.json")
+  fetch("data/escuelas_enriquecidas_clasificadas.json")
     .then((r) => r.json()),
 
   fetch("data/departamentos.json")
@@ -309,6 +507,12 @@ Promise.all([
     // ========================================================
     // ESCUELAS
     // ========================================================
+
+    const NIVELES_EXCLUIDOS = [
+      "Educación Especial y Hospitalaria",
+      "Nivel Inicial",
+      "Nivel Primario"
+    ];
 
     escuelas = datosEscuelas
 
@@ -332,12 +536,34 @@ Promise.all([
         typeof e.lon === "number"
       )
 
+      // 👉 Omitir los niveles que no querés mostrar
+      .filter((e) => {
+        const nivelLimpio = (e.nivel || "").trim();
+        return !NIVELES_EXCLUIDOS.includes(nivelLimpio);
+      })
+
       .map((e) => ({
         ...e,
 
         nivel:
           (e.nivel || "").trim() ||
-          "Sin especificar"
+          "Sin especificar",
+
+        categoriasPrecursoraOficial:
+          obtenerCategorias(e),
+
+        subcategoriasPrecursoraOficial:
+          obtenerSubcategorias(e),
+
+        categoriaPrecursora:
+          obtenerCategorias(e).length === 1
+            ? obtenerCategorias(e)[0]
+            : "MÚLTIPLE",
+
+        subcategoriaPrecursora:
+          obtenerSubcategorias(e).length === 1
+            ? obtenerSubcategorias(e)[0]
+            : "MÚLTIPLE"
       }));
 
 
@@ -383,6 +609,13 @@ Promise.all([
       "sector"
     );
 
+    llenarSelectValores(
+      "f-categoria",
+      obtenerTodasLasCategorias()
+    );
+
+    actualizarSubcategorias();
+
     llenarSelect(
       "f-anio",
       "precursoraYear"
@@ -418,6 +651,31 @@ Promise.all([
       .getElementById("buscar")
       .addEventListener(
         "input",
+        () => dibujar()
+      );
+
+
+    document
+      .getElementById("f-categoria")
+      .addEventListener(
+        "change",
+        () => {
+
+          actualizarSubcategorias();
+
+          document.getElementById(
+            "f-subcategoria"
+          ).value = "";
+
+          dibujar();
+        }
+      );
+
+
+    document
+      .getElementById("f-subcategoria")
+      .addEventListener(
+        "change",
         () => dibujar()
       );
 
@@ -526,6 +784,8 @@ function limpiar() {
     "f-depto",
     "f-nivel",
     "f-sector",
+    "f-categoria",
+    "f-subcategoria",
     "f-anio"
   ]
 
@@ -562,6 +822,18 @@ function filtrar() {
     ).value;
 
 
+  const categoria =
+    document.getElementById(
+      "f-categoria"
+    ).value;
+
+
+  const subcategoria =
+    document.getElementById(
+      "f-subcategoria"
+    ).value;
+
+
   const anio =
     document.getElementById(
       "f-anio"
@@ -594,6 +866,16 @@ function filtrar() {
 
       &&
 
+      (!categoria ||
+        obtenerCategorias(e).includes(categoria))
+
+      &&
+
+      (!subcategoria ||
+        obtenerSubcategorias(e).includes(subcategoria))
+
+      &&
+
       (!anio ||
         e.precursoraYear === anio)
 
@@ -601,7 +883,7 @@ function filtrar() {
 
       (!texto ||
         normalizar(
-          `${e.nombre} ${e.localidad} ${e.cue}`
+          `${e.nombre} ${e.localidad} ${e.departamento} ${e.domicilio} ${e.cue}`
         ).includes(texto))
   );
 
@@ -636,6 +918,8 @@ function volverAlResumen() {
     "f-depto",
     "f-nivel",
     "f-sector",
+    "f-categoria",
+    "f-subcategoria",
     "f-anio"
   ]
 
@@ -940,7 +1224,7 @@ function dibujarResumenPorDepartamento(
         total;
 
 
-      const burbujaDepto =
+ const burbujaDepto =
         L.divIcon({
 
           className:
@@ -965,10 +1249,10 @@ function dibujarResumenPorDepartamento(
           `,
 
           iconSize:
-            [110, 110],
+            [75, 75],    // Cambiado de [110, 110] a [75, 75]
 
           iconAnchor:
-            [55, 55]
+            [37, 37]     // Mitad exacta de iconSize (75 / 2 = 37)
 
         });
 
@@ -1088,6 +1372,14 @@ function popup(e) {
         </span>
 
         <span class="tag gris">
+          ${etiquetaCategorias(e)}
+        </span>
+
+        <span class="tag gris">
+          ${etiquetaSubcategorias(e)}
+        </span>
+
+        <span class="tag gris">
           Desde ${escapar(e.precursoraYear)}
         </span>
 
@@ -1153,12 +1445,14 @@ function armarLista(
   const ordenadas =
     [...visibles].sort(
       (a, b) =>
-        a.localidad.localeCompare(
-          b.localidad
+        (a.localidad || "").localeCompare(
+          b.localidad || "",
+          "es"
         ) ||
 
-        a.nombre.localeCompare(
-          b.nombre
+        (a.nombre || "").localeCompare(
+          b.nombre || "",
+          "es"
         )
     );
 

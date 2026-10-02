@@ -1,0 +1,320 @@
+{
+  "archivo_origen": "escuelas_enriquecidas(1).json",
+  "total_registros": 1517,
+  "registros_con_planes_oficiales": 488,
+  "total_planes_oficiales": 1175,
+  "clasificacion_por_plan": {
+    "SIN CLASIFICAR": 374,
+    "Ciencias Sociales y Humanidades": 362,
+    "Orientaciones Técnicas y de Producción (Alimentos y Bioagroindustria)": 309,
+    "Instituciones Pedagógicas (Nivel Superior de Formación Docente)": 130
+  },
+  "clasificacion_por_institucion_no_exclusiva": {
+    "Ciencias Sociales y Humanidades": 253,
+    "Orientaciones Técnicas y de Producción (Alimentos y Bioagroindustria)": 230,
+    "Instituciones Pedagógicas (Nivel Superior de Formación Docente)": 71
+  },
+  "subcategorias_por_institucion_no_exclusiva": {
+    "Ciencias Sociales y Humanidades": 122,
+    "Técnicas y de Producción General": 145,
+    "Formación Docente Inicial": 71,
+    "Artes y Multimedia": 18,
+    "Economía y Administración / Turismo": 162,
+    "Nuevas Especialidades": 58,
+    "Bioagroindustria, Agro y Ambiente": 42
+  },
+  "metodos_por_plan": {
+    "FUENTE_OFICIAL_SIN_REGLA": 374,
+    "FUENTE_OFICIAL_ORIENTACION": 801
+  },
+  "planes_sin_regla": [
+    {
+      "nivel": "Secundaria",
+      "orientacion": "Ciencias Naturales",
+      "cantidad": 90
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Administración",
+      "cantidad": 29
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Idioma inglés",
+      "cantidad": 17
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Lengua",
+      "cantidad": 16
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Biología",
+      "cantidad": 14
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Matemática",
+      "cantidad": 14
+    },
+    {
+      "nivel": "Secundaria",
+      "orientacion": "Bachiller",
+      "cantidad": 14
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Seguridad industrial",
+      "cantidad": 12
+    },
+    {
+      "nivel": "Secundaria",
+      "orientacion": "Educación Física",
+      "cantidad": 10
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Tecnología",
+      "cantidad": 10
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Agropecuaria",
+      "cantidad": 9
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Historia",
+      "cantidad": 9
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Programador de computadoras personales- certificado",
+      "cantidad": 8
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Enfermería",
+      "cantidad": 8
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Dibujo y diseño",
+      "cantidad": 7
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Geografia",
+      "cantidad": 6
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Artes Plasticas/Visuales",
+      "cantidad": 6
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Música",
+      "cantidad": 6
+    },
+    {
+      "nivel": "Secundaria",
+      "orientacion": "Lenguas",
+      "cantidad": 5
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Informática",
+      "cantidad": 5
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Economía",
+      "cantidad": 5
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Organización y gestion",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Sistemas",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Decoración",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Comunicación social",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Turismo",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Comercialización",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Instrumento",
+      "cantidad": 4
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Industrias de la alimentación",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Danza",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Comunicaciones",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Laboratorio",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Psicopedagogía",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Fisica",
+      "cantidad": 3
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Producción e instalaciónes industriales",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Medio ambiente/ Ecología",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Artes audiovisuales",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Energías",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Otras especialidades",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Optica",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Hotelería y gastronomía",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Comercio exterior",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Quimica",
+      "cantidad": 2
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Ortesis y protesis",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Otros",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Escultura",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Indumentaria",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Fotografia",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Canto",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Radiología y afines",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Psicología",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Teología",
+      "cantidad": 1
+    },
+    {
+      "nivel": "SNU",
+      "orientacion": "Instrumentación quirurgica",
+      "cantidad": 1
+    }
+  ],
+  "alcance_mapa_actual": {
+    "departamentos": [
+      "GENERAL ROCA",
+      "GENERAL SAN MARTIN",
+      "MARCO JUAREZ",
+      "MARCOS JUAREZ",
+      "PRESIDENTE ROQUE SAENZ PENA",
+      "SAN JUSTO",
+      "SAN MARTIN",
+      "UNION"
+    ],
+    "registros_en_alcance": 167,
+    "precursoras_en_alcance": 167,
+    "clasificaciones_de_precursoras_en_alcance": {
+      "Orientaciones Técnicas y de Producción (Alimentos y Bioagroindustria)": 88,
+      "Ciencias Sociales y Humanidades": 61,
+      "Instituciones Pedagógicas (Nivel Superior de Formación Docente)": 21
+    }
+  },
+  "reglas": {
+    "fuente": "fuenteOficial.planesEstudio",
+    "nota": "No se clasifica por unión de todas las orientaciones de la institución; se clasifica por Nivel + Orientación de cada plan."
+  }
+}
