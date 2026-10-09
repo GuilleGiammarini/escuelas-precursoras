@@ -2,16 +2,9 @@
 // CONFIGURACIÓN
 // ============================================================
 
-const DEPARTAMENTOS = [
-  "GENERAL SAN MARTIN",
-  "SAN MARTIN",
-  "UNION",
-  "MARCOS JUAREZ",
-  "MARCO JUAREZ",
-  "SAN JUSTO",
-  "GENERAL ROCA",
-  "PRESIDENTE ROQUE SAENZ PENA"
-];
+// Se completa dinámicamente con los departamentos presentes en
+// data/departamentos.json. Ya no se limita a una lista manual.
+let DEPARTAMENTOS = [];
 
 const PALETA = [
   "#2563eb",
@@ -77,181 +70,232 @@ const bonito = (t) =>
 const CATEGORIAS_PRECURSORAS = [
   "Orientaciones Técnicas y de Producción (Alimentos y Bioagroindustria)",
   "Ciencias Sociales y Humanidades",
-  "Instituciones Pedagógicas (Nivel Superior de Formación Docente)",
-  "SIN CLASIFICAR"
+  "Instituciones Pedagógicas (Nivel Superior de Formación Docente)"
 ];
 
-
+// Lee tanto el esquema anterior (clasificacionesPrecursora) como
+// el esquema nuevo del clasificador (planesClasificados).
 function obtenerClasificaciones(e) {
+  const todas = Array.isArray(e.planesClasificados)
+    ? e.planesClasificados
+    : Array.isArray(e.clasificacionesPrecursora)
+      ? e.clasificacionesPrecursora
+      : [];
 
-  const todas = Array.isArray(e.clasificacionesPrecursora)
-    ? e.clasificacionesPrecursora
-    : [];
-
-  if (!todas.length) {
-    return [];
-  }
+  if (!todas.length) return [];
 
   const nivel = normalizar(e.nivel);
-
-  // Las fichas de secundaria y Jóvenes y Adultos
-  // se relacionan con las orientaciones de Secundaria.
-  const esSecundaria =
-    nivel.includes("SECUNDARIO") ||
-    nivel.includes("JOVENES Y ADULTOS");
-
-  // Las fichas de Superior se relacionan con los planes SNU.
-  const esSuperior =
-    nivel.includes("SUPERIOR");
+  const esSecundaria = nivel.includes("SECUNDARIO") || nivel.includes("JOVENES Y ADULTOS");
+  const esSuperior = nivel.includes("SUPERIOR");
 
   if (esSecundaria) {
-
-    const secundarias = todas.filter(
-      (c) => normalizar(c.nivel) === "SECUNDARIA"
-    );
-
-    if (secundarias.length) {
-      return secundarias;
-    }
-
+    const secundarias = todas.filter(c => normalizar(c.nivel) === "SECUNDARIA");
+    if (secundarias.length) return secundarias;
   }
-
   if (esSuperior) {
-
-    const snu = todas.filter(
-      (c) => normalizar(c.nivel) === "SNU"
-    );
-
-    if (snu.length) {
-      return snu;
-    }
-
+    const snu = todas.filter(c => normalizar(c.nivel) === "SNU");
+    if (snu.length) return snu;
   }
-
-  // Para otros casos dejamos las clasificaciones disponibles.
   return todas;
 }
 
+function valoresUnicos(valores) {
+  return [...new Set((valores || []).filter(v => typeof v === "string" && v.trim()).map(v => v.trim()))];
+}
 
 function obtenerCategorias(e) {
+  const desdePlanes = obtenerClasificaciones(e)
+    .filter(c => normalizar(c.categoria) !== "SIN CLASIFICAR")
+    .map(c => c.categoria)
+    .filter(Boolean);
+  if (desdePlanes.length) return valoresUnicos(desdePlanes);
 
-  const categorias =
-    obtenerClasificaciones(e)
-      .map((c) => c.categoria)
-      .filter(Boolean);
-
-  // Si la clasificación oficial indica explícitamente una
-  // categoría pero no trae el detalle de clasificaciones,
-  // usamos también ese campo como respaldo.
-  if (!categorias.length && e.categoriaPrecursoraOficial) {
-    return [e.categoriaPrecursoraOficial];
+  const arrays = e.categoriasPrecursorasOficiales || e.categoriasPrecursoraOficiales || e.categoriasPrecursoraOficial;
+  if (Array.isArray(arrays) && arrays.length) return valoresUnicos(arrays);
+  if (typeof e.categoriaPrecursoraOficial === "string" && e.categoriaPrecursoraOficial.trim() && !["MÚLTIPLE", "MULTIPLE", "SIN CLASIFICAR"].includes(normalizar(e.categoriaPrecursoraOficial))) {
+    return [e.categoriaPrecursoraOficial.trim()];
   }
-
-  return [
-    ...new Set(categorias)
-  ];
+  return [];
 }
-
 
 function obtenerSubcategorias(e) {
+  const desdePlanes = obtenerClasificaciones(e)
+    .filter(c => normalizar(c.categoria) !== "SIN CLASIFICAR")
+    .map(c => c.subcategoria)
+    .filter(Boolean);
+  if (desdePlanes.length) return valoresUnicos(desdePlanes);
 
-  const subcategorias =
-    obtenerClasificaciones(e)
-      .map((c) => c.subcategoria)
-      .filter(Boolean);
-
-  if (!subcategorias.length && e.subcategoriaPrecursoraOficial) {
-    return [e.subcategoriaPrecursoraOficial];
+  const arrays = e.subcategoriasPrecursorasOficiales || e.subcategoriasPrecursoraOficiales || e.subcategoriasPrecursoraOficial;
+  if (Array.isArray(arrays) && arrays.length) return valoresUnicos(arrays);
+  if (typeof e.subcategoriaPrecursoraOficial === "string" && e.subcategoriaPrecursoraOficial.trim() && !["MÚLTIPLE", "MULTIPLE", "REVISAR"].includes(normalizar(e.subcategoriaPrecursoraOficial))) {
+    return [e.subcategoriaPrecursoraOficial.trim()];
   }
-
-  return [
-    ...new Set(subcategorias)
-  ];
+  return [];
 }
-
 
 function etiquetaCategorias(e) {
-
   const valores = obtenerCategorias(e);
-
-  return valores.length
-    ? valores.map(escapar).join(" · ")
-    : "Sin clasificar";
+  return valores.length ? valores.map(escapar).join(" · ") : "Pendiente de clasificación";
 }
-
 
 function etiquetaSubcategorias(e) {
-
   const valores = obtenerSubcategorias(e);
-
-  return valores.length
-    ? valores.map(escapar).join(" · ")
-    : "Revisar";
+  return valores.length ? valores.map(escapar).join(" · ") : "Pendiente de revisión";
 }
-
 
 function obtenerTodasLasCategorias() {
-
-  return [
-    ...new Set(
-      escuelas.flatMap((e) => obtenerCategorias(e))
-    )
-  ].sort((a, b) =>
-    a.localeCompare(b, "es")
-  );
+  return [...new Set(escuelas.flatMap(e => obtenerCategorias(e)))].sort((a, b) => a.localeCompare(b, "es"));
 }
 
-
-function obtenerTodasLasSubcategorias(categoria = "") {
-
-  return [
-    ...new Set(
-      escuelas.flatMap((e) => {
-
-        const categorias = obtenerCategorias(e);
-
-        if (
-          categoria &&
-          !categorias.includes(categoria)
-        ) {
-          return [];
-        }
-
-        return obtenerSubcategorias(e);
-
-      })
-    )
-  ].sort((a, b) =>
-    a.localeCompare(b, "es")
-  );
+function obtenerTodasLasSubcategorias(categorias = []) {
+  const seleccionadas = Array.isArray(categorias) ? categorias : (categorias ? [categorias] : []);
+  return [...new Set(escuelas.flatMap(e => {
+    if (seleccionadas.length && !obtenerCategorias(e).some(c => seleccionadas.includes(c))) return [];
+    return obtenerSubcategorias(e);
+  }))].sort((a, b) => a.localeCompare(b, "es"));
 }
-
 
 function llenarSelectValores(id, valores) {
-
   const sel = document.getElementById(id);
-
-  while (sel.options.length > 1) {
-    sel.remove(1);
-  }
-
-  [...new Set(valores.filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "es"))
-    .forEach((v) => {
-      sel.add(new Option(v, v));
-    });
+  const seleccionados = obtenerValoresSeleccionados(id);
+  while (sel.options.length > 1) sel.remove(1);
+  [...new Set(valores.filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")).forEach(v => {
+    const option = new Option(v, v);
+    option.selected = seleccionados.includes(v);
+    sel.add(option);
+  });
+  if (MULTISELECTS[id]) actualizarOpcionesMultiSelect(id);
 }
 
+function obtenerValoresSeleccionados(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return [];
+  return [...sel.options].filter(o => o.selected && o.value).map(o => o.value);
+}
 
 function actualizarSubcategorias() {
+  const categorias = obtenerValoresSeleccionados("f-categoria");
+  llenarSelectValores("f-subcategoria", obtenerTodasLasSubcategorias(categorias));
+}
 
-  const categoria =
-    document.getElementById("f-categoria").value;
+// Convierte los dos selectores de clasificación en menús con casillas.
+// Los select originales quedan ocultos como almacenamiento compatible con el resto del mapa.
+const MULTISELECTS = {};
 
-  llenarSelectValores(
-    "f-subcategoria",
-    obtenerTodasLasSubcategorias(categoria)
-  );
+function crearMultiSelect(id, placeholder) {
+  const sel = document.getElementById(id);
+  if (!sel || MULTISELECTS[id]) return;
+
+  sel.multiple = true;
+  sel.setAttribute("aria-hidden", "true");
+  sel.tabIndex = -1;
+  sel.style.display = "none";
+
+  const wrap = document.createElement("div");
+  wrap.className = "filtro-multiselect";
+  wrap.dataset.filtro = id;
+  wrap.style.cssText = "position:relative;width:100%;font:inherit;";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "filtro-multiselect-boton";
+  button.style.cssText = "width:100%;min-height:38px;padding:9px 34px 9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#334155;text-align:left;font:inherit;cursor:pointer;position:relative;";
+  button.setAttribute("aria-expanded", "false");
+
+  const flecha = document.createElement("span");
+  flecha.textContent = "▾";
+  flecha.style.cssText = "position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#64748b;";
+  button.appendChild(flecha);
+
+  const menu = document.createElement("div");
+  menu.className = "filtro-multiselect-menu";
+  menu.style.cssText = "display:none;position:absolute;z-index:1200;top:calc(100% + 4px);left:0;right:0;max-height:260px;overflow:auto;padding:8px;background:#fff;border:1px solid #cbd5e1;border-radius:9px;box-shadow:0 10px 25px rgba(15,23,42,.16);";
+
+  const acciones = document.createElement("div");
+  acciones.style.cssText = "display:flex;gap:8px;justify-content:space-between;padding:2px 2px 8px;margin-bottom:5px;border-bottom:1px solid #e2e8f0;";
+  const marcar = document.createElement("button");
+  marcar.type = "button"; marcar.textContent = "Seleccionar todas";
+  const borrar = document.createElement("button");
+  borrar.type = "button"; borrar.textContent = "Quitar selección";
+  [marcar, borrar].forEach(b => b.style.cssText = "border:0;background:transparent;color:#2563eb;font-size:12px;cursor:pointer;padding:3px;");
+  acciones.append(marcar, borrar);
+  menu.appendChild(acciones);
+
+  const opciones = document.createElement("div");
+  menu.appendChild(opciones);
+  wrap.append(button, menu);
+  sel.insertAdjacentElement("afterend", wrap);
+
+  MULTISELECTS[id] = { sel, wrap, button, menu, opciones, placeholder };
+
+  button.addEventListener("click", () => {
+    const abrir = menu.style.display === "none";
+    Object.entries(MULTISELECTS).forEach(([otroId, cfg]) => {
+      if (otroId !== id) { cfg.menu.style.display = "none"; cfg.button.setAttribute("aria-expanded", "false"); }
+    });
+    menu.style.display = abrir ? "block" : "none";
+    button.setAttribute("aria-expanded", String(abrir));
+  });
+
+  marcar.addEventListener("click", () => {
+    [...sel.options].forEach(o => { if (o.value) o.selected = true; });
+    manejarCambioMultiSelect(id);
+  });
+  borrar.addEventListener("click", () => {
+    [...sel.options].forEach(o => { o.selected = false; });
+    manejarCambioMultiSelect(id);
+  });
+
+  actualizarOpcionesMultiSelect(id);
+}
+
+function actualizarOpcionesMultiSelect(id) {
+  const cfg = MULTISELECTS[id];
+  if (!cfg) return;
+  const { sel, button, opciones, placeholder } = cfg;
+  const seleccionados = obtenerValoresSeleccionados(id);
+  const texto = seleccionados.length === 0
+    ? placeholder
+    : seleccionados.length === 1
+      ? seleccionados[0]
+      : `${seleccionados.length} opciones seleccionadas`;
+  button.textContent = texto;
+  const flecha = document.createElement("span");
+  flecha.textContent = "▾";
+  flecha.style.cssText = "position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#64748b;";
+  button.appendChild(flecha);
+
+  opciones.innerHTML = "";
+  [...sel.options].filter(o => o.value).forEach(option => {
+    const label = document.createElement("label");
+    label.style.cssText = "display:flex;align-items:flex-start;gap:8px;padding:7px 5px;border-radius:5px;cursor:pointer;color:#334155;font-size:13px;line-height:1.35;";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = option.selected;
+    check.value = option.value;
+    check.style.cssText = "margin-top:2px;accent-color:#2563eb;flex-shrink:0;";
+    check.addEventListener("change", () => {
+      option.selected = check.checked;
+      manejarCambioMultiSelect(id);
+    });
+    label.append(check, document.createTextNode(option.textContent));
+    opciones.appendChild(label);
+  });
+  if (!opciones.children.length) {
+    const vacio = document.createElement("div");
+    vacio.textContent = "No hay opciones disponibles";
+    vacio.style.cssText = "padding:8px;color:#64748b;font-size:12px;";
+    opciones.appendChild(vacio);
+  }
+}
+
+function manejarCambioMultiSelect(id) {
+  actualizarOpcionesMultiSelect(id);
+  if (id === "f-categoria") {
+    actualizarSubcategorias();
+    actualizarOpcionesMultiSelect("f-subcategoria");
+  }
+  dibujar();
 }
 
 
@@ -504,6 +548,11 @@ Promise.all([
 
   .then(([datosEscuelas, datosDeptos]) => {
 
+    // Tomar todos los departamentos desde el GeoJSON actualizado.
+    DEPARTAMENTOS = (datosDeptos?.features || [])
+      .map((feature) => feature?.properties?.nombre)
+      .filter(Boolean);
+
     // ========================================================
     // ESCUELAS
     // ========================================================
@@ -525,11 +574,9 @@ Promise.all([
         e.isPrecursora === true
       )
 
-      .filter((e) =>
-        DEPARTAMENTOS.includes(
-          normalizar(e.departamento)
-        )
-      )
+      // No restringir por una lista fija de departamentos.
+      // Así se incluyen las escuelas de todos los departamentos
+      // presentes en el JSON de datos.
 
       .filter((e) =>
         typeof e.lat === "number" &&
@@ -599,6 +646,10 @@ Promise.all([
       "departamento"
     );
 
+    // Agregar también los departamentos del GeoJSON aunque todavía
+    // no tengan escuelas precursoras en el conjunto de datos.
+    agregarDepartamentosAlFiltro(DEPARTAMENTOS);
+
     llenarSelect(
       "f-nivel",
       "nivel"
@@ -615,6 +666,11 @@ Promise.all([
     );
 
     actualizarSubcategorias();
+
+    crearMultiSelect("f-categoria", "Categorías principales");
+    crearMultiSelect("f-subcategoria", "Subcategorías");
+    actualizarOpcionesMultiSelect("f-categoria");
+    actualizarOpcionesMultiSelect("f-subcategoria");
 
     llenarSelect(
       "f-anio",
@@ -655,29 +711,6 @@ Promise.all([
       );
 
 
-    document
-      .getElementById("f-categoria")
-      .addEventListener(
-        "change",
-        () => {
-
-          actualizarSubcategorias();
-
-          document.getElementById(
-            "f-subcategoria"
-          ).value = "";
-
-          dibujar();
-        }
-      );
-
-
-    document
-      .getElementById("f-subcategoria")
-      .addEventListener(
-        "change",
-        () => dibujar()
-      );
 
 
     document
@@ -717,6 +750,40 @@ Promise.all([
 // ============================================================
 // FILTROS Y LEYENDA
 // ============================================================
+
+function agregarDepartamentosAlFiltro(departamentos) {
+  const select = document.getElementById("f-depto");
+  if (!select) return;
+
+  (departamentos || [])
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "es"))
+    .forEach((nombre) => {
+      const existe = Array.from(select.options).some(
+        (opcion) => opcion.value && normalizar(opcion.value) === normalizar(nombre)
+      );
+
+      if (!existe) {
+        select.add(new Option(nombre, nombre));
+      }
+    });
+}
+
+function seleccionarDepartamento(nombre) {
+  const select = document.getElementById("f-depto");
+  if (!select || !nombre) return;
+
+  let opcion = Array.from(select.options).find(
+    (item) => item.value && normalizar(item.value) === normalizar(nombre)
+  );
+
+  if (!opcion) {
+    opcion = new Option(nombre, nombre);
+    select.add(opcion);
+  }
+
+  select.value = opcion.value;
+}
 
 function llenarSelect(id, campo) {
 
@@ -789,14 +856,18 @@ function limpiar() {
     "f-anio"
   ]
 
-    .forEach(
-      (id) =>
-        (
-          document.getElementById(id).value = ""
-        )
-    );
+    .forEach((id) => {
+      const sel = document.getElementById(id);
+      if (id === "f-categoria" || id === "f-subcategoria") {
+        [...sel.options].forEach(o => { o.selected = false; });
+        actualizarOpcionesMultiSelect(id);
+      } else {
+        sel.value = "";
+      }
+    });
 
-
+  actualizarSubcategorias();
+  actualizarOpcionesMultiSelect("f-subcategoria");
   dibujar();
 
 }
@@ -822,16 +893,8 @@ function filtrar() {
     ).value;
 
 
-  const categoria =
-    document.getElementById(
-      "f-categoria"
-    ).value;
-
-
-  const subcategoria =
-    document.getElementById(
-      "f-subcategoria"
-    ).value;
+  const categorias = obtenerValoresSeleccionados("f-categoria");
+  const subcategorias = obtenerValoresSeleccionados("f-subcategoria");
 
 
   const anio =
@@ -852,7 +915,7 @@ function filtrar() {
     (e) =>
 
       (!depto ||
-        e.departamento === depto)
+        normalizar(e.departamento) === normalizar(depto))
 
       &&
 
@@ -866,13 +929,13 @@ function filtrar() {
 
       &&
 
-      (!categoria ||
-        obtenerCategorias(e).includes(categoria))
+      (!categorias.length ||
+        obtenerCategorias(e).some(c => categorias.includes(c)))
 
       &&
 
-      (!subcategoria ||
-        obtenerSubcategorias(e).includes(subcategoria))
+      (!subcategorias.length ||
+        obtenerSubcategorias(e).some(s => subcategorias.includes(s)))
 
       &&
 
@@ -925,13 +988,18 @@ function volverAlResumen() {
 
     .forEach((id) => {
 
-      document.getElementById(
-        id
-      ).value = "";
+      const sel = document.getElementById(id);
+      if (id === "f-categoria" || id === "f-subcategoria") {
+        [...sel.options].forEach(o => { o.selected = false; });
+        actualizarOpcionesMultiSelect(id);
+      } else {
+        sel.value = "";
+      }
 
     });
 
-
+  actualizarSubcategorias();
+  actualizarOpcionesMultiSelect("f-subcategoria");
   mapa.closePopup();
 
   dibujar();
@@ -953,40 +1021,14 @@ function dibujarLimitesDepartamentos(
 
       style: function (feature) {
 
-        const nombreDepto =
-          normalizar(
-            feature.properties.nombre || ""
-          );
-
-
-        const esValido =
-          DEPARTAMENTOS.includes(
-            nombreDepto
-          );
-
-
+        // Todos los departamentos del GeoJSON se muestran con
+        // el mismo estilo, sin depender de una lista fija.
         return {
-
-          color:
-            esValido
-              ? "#2563eb"
-              : "#cbd5e1",
-
-          weight:
-            esValido
-              ? 2
-              : 1,
-
-          fillColor:
-            esValido
-              ? "#3b82f6"
-              : "#f1f5f9",
-
-          fillOpacity:
-            esValido
-              ? 0.05
-              : 0.02
-
+          color: "#2563eb",
+          weight: 2,
+          opacity: 1,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.05
         };
 
       },
@@ -1024,25 +1066,8 @@ function dibujarLimitesDepartamentos(
             click:
               function () {
 
-                const deptoMatch =
-                  DEPARTAMENTOS.find(
-                    d =>
-                      normalizar(d) ===
-                      normalizar(nombreDepto)
-                  );
-
-
-                if (deptoMatch) {
-
-                  document.getElementById(
-                    "f-depto"
-                  ).value =
-                    deptoMatch;
-
-
-                  entrarAlDetalle();
-
-                }
+                seleccionarDepartamento(nombreDepto);
+                entrarAlDetalle();
 
               }
 
@@ -1278,12 +1303,7 @@ function dibujarResumenPorDepartamento(
           "click",
           () => {
 
-            document.getElementById(
-              "f-depto"
-            ).value =
-              depto.nombre;
-
-
+            seleccionarDepartamento(depto.nombre);
             entrarAlDetalle();
 
           }
